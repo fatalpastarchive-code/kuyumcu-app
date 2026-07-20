@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as cleanup from "../cleanup.js";
 import type * as customers from "../customers.js";
+import type * as logs from "../logs.js";
 import type * as notificationSettings from "../notificationSettings.js";
 import type * as payments from "../payments.js";
 import type * as settings from "../settings.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   cleanup: typeof cleanup;
   customers: typeof customers;
+  logs: typeof logs;
   notificationSettings: typeof notificationSettings;
   payments: typeof payments;
   settings: typeof settings;

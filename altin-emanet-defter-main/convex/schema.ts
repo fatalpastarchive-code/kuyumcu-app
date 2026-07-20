@@ -99,4 +99,17 @@ export default defineSchema({
     displayName: v.string(),
     currencyCardPreferences: v.array(v.string()),
   }),
+
+  // Log tablosu
+  logs: defineTable({
+    shopId: v.id("shops"),
+    userId: v.id("users"),
+    action: v.string(), // "customer_created", "customer_updated", "customer_deleted", "transaction_created", "transaction_deleted"
+    entityType: v.string(), // "customer", "transaction"
+    entityId: v.optional(v.string()), // ID as string to accept both customers and transactions
+    details: v.optional(v.string()), // JSON string of additional details
+    createdAt: v.number(),
+  }).index("by_shop", ["shopId"])
+   .index("by_user", ["userId"])
+   .index("by_date", ["createdAt"]),
 });

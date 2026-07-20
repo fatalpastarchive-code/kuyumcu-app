@@ -11,6 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuperAdminRouteImport } from './routes/super-admin'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as LogsRouteImport } from './routes/logs'
+import { Route as LedgerRouteImport } from './routes/ledger'
+import { Route as DeadlinesRouteImport } from './routes/deadlines'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -27,6 +31,26 @@ const SuperAdminRoute = SuperAdminRouteImport.update({
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogsRoute = LogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LedgerRoute = LedgerRouteImport.update({
+  id: '/ledger',
+  path: '/ledger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeadlinesRoute = DeadlinesRouteImport.update({
+  id: '/deadlines',
+  path: '/deadlines',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -69,6 +93,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/deadlines': typeof DeadlinesRoute
+  '/ledger': typeof LedgerRoute
+  '/logs': typeof LogsRoute
+  '/settings': typeof SettingsRoute
   '/sign-up': typeof SignUpRoute
   '/super-admin': typeof SuperAdminRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
@@ -79,6 +107,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/deadlines': typeof DeadlinesRoute
+  '/ledger': typeof LedgerRoute
+  '/logs': typeof LogsRoute
+  '/settings': typeof SettingsRoute
   '/sign-up': typeof SignUpRoute
   '/super-admin': typeof SuperAdminRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -90,6 +122,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/deadlines': typeof DeadlinesRoute
+  '/ledger': typeof LedgerRoute
+  '/logs': typeof LogsRoute
+  '/settings': typeof SettingsRoute
   '/sign-up': typeof SignUpRoute
   '/super-admin': typeof SuperAdminRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
@@ -102,6 +138,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/deadlines'
+    | '/ledger'
+    | '/logs'
+    | '/settings'
     | '/sign-up'
     | '/super-admin'
     | '/app'
@@ -112,6 +152,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/deadlines'
+    | '/ledger'
+    | '/logs'
+    | '/settings'
     | '/sign-up'
     | '/super-admin'
     | '/app'
@@ -122,6 +166,10 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/dashboard'
+    | '/deadlines'
+    | '/ledger'
+    | '/logs'
+    | '/settings'
     | '/sign-up'
     | '/super-admin'
     | '/_authenticated/app'
@@ -134,6 +182,10 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  DeadlinesRoute: typeof DeadlinesRoute
+  LedgerRoute: typeof LedgerRoute
+  LogsRoute: typeof LogsRoute
+  SettingsRoute: typeof SettingsRoute
   SignUpRoute: typeof SignUpRoute
   SuperAdminRoute: typeof SuperAdminRoute
 }
@@ -152,6 +204,34 @@ declare module '@tanstack/react-router' {
       path: '/sign-up'
       fullPath: '/sign-up'
       preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logs': {
+      id: '/logs'
+      path: '/logs'
+      fullPath: '/logs'
+      preLoaderRoute: typeof LogsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ledger': {
+      id: '/ledger'
+      path: '/ledger'
+      fullPath: '/ledger'
+      preLoaderRoute: typeof LedgerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deadlines': {
+      id: '/deadlines'
+      path: '/deadlines'
+      fullPath: '/deadlines'
+      preLoaderRoute: typeof DeadlinesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -236,6 +316,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  DeadlinesRoute: DeadlinesRoute,
+  LedgerRoute: LedgerRoute,
+  LogsRoute: LogsRoute,
+  SettingsRoute: SettingsRoute,
   SignUpRoute: SignUpRoute,
   SuperAdminRoute: SuperAdminRoute,
 }

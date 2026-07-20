@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 // @ts-ignore
 import { api } from "@convex/_generated/api.js";
-import { 
-  LogOut, Plus, Search, Phone, MessageSquare, Calendar, 
-  TrendingUp, AlertCircle, Trash2, ArrowUpRight, ArrowDownLeft, 
-  X, Check, DollarSign, Clock, HelpCircle, ChevronRight, Settings, Users
+import {
+  Plus, Search, Phone, MessageSquare, Calendar,
+  TrendingUp, AlertCircle, ArrowUpRight, ArrowDownLeft,
+  ChevronRight, Users, Settings, Trash2, X
 } from "lucide-react";
 import { useAuth } from "@clerk/clerk-react";
 import { toast } from "sonner";
+import { BottomNavigation } from "../navigation/BottomNavigation";
 
 // Altın ayarları ve birim etiketleri
 const METAL_TYPES = [
@@ -21,7 +22,7 @@ const METAL_TYPES = [
 ];
 
 export function Dashboard() {
-  const { signOut, userId } = useAuth();
+  const { userId } = useAuth();
   const user = useQuery(api.users.getMe);
   const customers = useQuery(api.customers.getShopCustomers, userId ? { clerkId: userId } : "skip");
   const transactions = useQuery(api.transactions.getShopTransactions, userId ? { clerkId: userId } : "skip");
@@ -29,6 +30,8 @@ export function Dashboard() {
   const createCustomer = useMutation(api.customers.createCustomer);
   const createTransaction = useMutation(api.transactions.createTransaction);
   const updateCustomer = useMutation(api.customers.updateCustomer);
+  const deleteCustomer = useMutation(api.customers.deleteCustomer);
+  const deleteTransaction = useMutation(api.transactions.deleteTransaction);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddCustomer, setShowAddCustomer] = useState(false);
@@ -43,6 +46,7 @@ export function Dashboard() {
   
   // Detay sayfası durumları
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [txType, setTxType] = useState<"debt" | "payment">("debt");
   const [txMetalType, setTxMetalType] = useState("TL");
@@ -52,7 +56,8 @@ export function Dashboard() {
 
   // Seçilen müşteri bilgileri
   const selectedCustomer = customers?.find((c: any) => c._id === selectedCustomerId);
-  
+  const selectedTransaction = transactions?.find((t: any) => t._id === selectedTransactionId);
+
   // Seçilen müşterinin hareketleri
   const selectedCustomerTx = transactions?.filter((t: any) => t.customerId === selectedCustomerId);
 
@@ -177,6 +182,41 @@ export function Dashboard() {
     }
   };
 
+  const handleDeleteCustomer = async () => {
+    if (!selectedCustomerId) return;
+
+    if (!confirm("Bu müşteriyi ve tüm işlemlerini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+      return;
+    }
+
+    try {
+      await deleteCustomer({
+        customerId: selectedCustomerId as any,
+        clerkId: userId!,
+      });
+      toast.success("Müşteri başarıyla silindi.");
+      setSelectedCustomerId(null);
+    } catch (err: any) {
+      toast.error("Hata: " + err.message);
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    if (!confirm("Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
+      return;
+    }
+
+    try {
+      await deleteTransaction({
+        transactionId: transactionId as any,
+        clerkId: userId!,
+      });
+      toast.success("İşlem başarıyla silindi.");
+    } catch (err: any) {
+      toast.error("Hata: " + err.message);
+    }
+  };
+
   const handleAddTransactionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomerId || !txAmount || parseFloat(txAmount) <= 0) {
@@ -227,9 +267,9 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white font-sans selection:bg-amber-500 selection:text-black">
+    <div className="min-h-screen bg-zinc-950 text-white font-sans selection:bg-amber-500 selection:text-black pb-24">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900/60 py-4 px-6 flex justify-between items-center">
+      <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900/60 py-4 px-6">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
             <span className="font-extrabold text-zinc-950 text-sm">AD</span>
@@ -239,13 +279,6 @@ export function Dashboard() {
             <span className="text-[10px] text-amber-500 font-semibold tracking-widest uppercase block -mt-1">Emanet Paneli</span>
           </div>
         </div>
-        <button
-          onClick={() => signOut()}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors bg-zinc-900 border border-zinc-800/60 px-3 py-2 rounded-xl cursor-pointer"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          Çıkış
-        </button>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -399,6 +432,12 @@ export function Dashboard() {
                 >
                   <Settings className="w-3.5 h-3.5" />
                 </button>
+                <button
+                  onClick={handleDeleteCustomer}
+                  className="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 hover:text-red-300 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
                 <a
                   href={`tel:${selectedCustomer.phone}`}
                   className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
@@ -546,7 +585,11 @@ export function Dashboard() {
                     </div>
                   ) : (
                     selectedCustomerTx?.map((tx: any) => (
-                      <div key={tx._id} className="bg-zinc-950/40 border border-zinc-900 rounded-lg p-2.5 flex items-center justify-between">
+                      <div
+                        key={tx._id}
+                        onClick={() => setSelectedTransactionId(tx._id)}
+                        className="bg-zinc-950/40 border border-zinc-900 rounded-lg p-2.5 flex items-center justify-between cursor-pointer hover:bg-zinc-900/60 transition-colors"
+                      >
                         <div className="flex items-center gap-2 min-w-0">
                           <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
                             tx.type === "debt"
@@ -565,12 +608,23 @@ export function Dashboard() {
                             </span>
                           </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <span className={`text-xs font-bold block ${
-                            tx.type === "debt" ? "text-red-400" : "text-emerald-400"
-                          }`}>
-                            {tx.type === "debt" ? "" : "-"}{tx.amount} <span className="text-[9px] uppercase">{tx.metalType}</span>
-                          </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="text-right">
+                            <span className={`text-xs font-bold block ${
+                              tx.type === "debt" ? "text-red-400" : "text-emerald-400"
+                            }`}>
+                              {tx.type === "debt" ? "" : "-"}{tx.amount} <span className="text-[9px] uppercase">{tx.metalType}</span>
+                            </span>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTransaction(tx._id);
+                            }}
+                            className="w-6 h-6 rounded-md bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 hover:text-red-300 transition-colors flex-shrink-0"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
                         </div>
                       </div>
                     ))
@@ -691,6 +745,101 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* ── TRANSACTION DETAIL BOTTOM SHEET ── */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setSelectedTransactionId(null)}
+          />
+          <div className="relative w-full max-w-lg bg-zinc-900/95 border-t border-zinc-800 rounded-t-[32px] shadow-2xl p-4 overflow-hidden max-h-[85vh] flex flex-col z-10">
+            <div className="w-12 h-1 bg-zinc-700 rounded-full mx-auto mb-4 flex-shrink-0" />
+
+            {/* Transaction Header */}
+            <div className="flex items-start justify-between mb-4 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  selectedTransaction.type === "debt"
+                    ? "bg-red-500/10 border border-red-500/20"
+                    : "bg-emerald-500/10 border border-emerald-500/20"
+                }`}>
+                  {selectedTransaction.type === "debt" ? (
+                    <ArrowUpRight className="w-6 h-6 text-red-400" />
+                  ) : (
+                    <ArrowDownLeft className="w-6 h-6 text-emerald-400" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-white">
+                    {selectedTransaction.type === "debt" ? "Borç Kaydı" : "Ödeme"}
+                  </h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {new Date(selectedTransaction.createdAt).toLocaleString("tr-TR")}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedTransactionId(null)}
+                className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center text-zinc-400 hover:text-white transition-colors flex-shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Amount Display */}
+            <div className={`bg-zinc-950/60 border rounded-2xl p-4 mb-4 flex-shrink-0 ${
+              selectedTransaction.type === "debt"
+                ? "border-red-500/20"
+                : "border-emerald-500/20"
+            }`}>
+              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Tutar</span>
+              <div className={`text-3xl font-extrabold ${
+                selectedTransaction.type === "debt" ? "text-red-400" : "text-emerald-400"
+              }`}>
+                {selectedTransaction.type === "debt" ? "" : "-"}{selectedTransaction.amount} <span className="text-lg uppercase">{selectedTransaction.metalType}</span>
+              </div>
+            </div>
+
+            {/* Details */}
+            <div className="space-y-3 flex-1 overflow-y-auto pb-20">
+              {selectedTransaction.note && (
+                <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-3">
+                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Not</span>
+                  <p className="text-sm text-zinc-300">{selectedTransaction.note}</p>
+                </div>
+              )}
+
+              {selectedTransaction.dueDate && (
+                <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-3">
+                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Vade Tarihi</span>
+                  <p className="text-sm text-zinc-300 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-amber-400" />
+                    {new Date(selectedTransaction.dueDate).toLocaleString("tr-TR")}
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-3">
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">İşlem ID</span>
+                <p className="text-xs text-zinc-500 font-mono">{selectedTransaction._id}</p>
+              </div>
+
+              <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-3">
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Müşteri</span>
+                <p className="text-sm text-zinc-300">{selectedCustomer?.name}</p>
+                <p className="text-xs text-zinc-500">{selectedCustomer?.phone}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Navigation */}
+      <BottomNavigation 
+        onQuickAddClick={() => setShowAddCustomer(true)}
+        overdueCount={stats.totalOverdue}
+      />
     </div>
   );
 }

@@ -26,6 +26,21 @@ export const createCustomer = mutation({
       phone: args.phone,
       createdAt: Date.now(),
     });
+
+    // Log kaydı oluştur
+    await ctx.db.insert("logs", {
+      shopId: user.shopId,
+      userId: user._id,
+      action: "customer_created",
+      entityType: "customer",
+      entityId: customerId as any,
+      details: JSON.stringify({
+        customerName: args.name,
+        customerPhone: args.phone,
+      }),
+      createdAt: Date.now(),
+    });
+
     return customerId;
   },
 });
@@ -126,6 +141,70 @@ export const updateCustomer = mutation({
 
     const { customerId, clerkId, ...updates } = args;
     await ctx.db.patch(customerId, updates);
+
+    // Log kaydı oluştur
+    await ctx.db.insert("logs", {
+      shopId: user.shopId!,
+      userId: user._id,
+      action: "customer_updated",
+      entityType: "customer",
+      entityId: customerId as any,
+      details: JSON.stringify({
+        customerName: customer.name,
+        updates: updates,
+      }),
+      createdAt: Date.now(),
+    });
+  },
+});
+
+// Müşteri ve işlem verilerini CSV formatında getirme
+export const exportShopDataCSV = query({
+  args: {
+    clerkId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Use clerkId to find user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user || !user.shopId) {
+      return "";
+    }
+
+    const customers = await ctx.db
+      .query("customers")
+      .withIndex("by_shop", (q) => q.eq("shopId", user.shopId!))
+      .collect();
+
+    const transactions = await ctx.db
+      .query("transactions")
+      .withIndex("by_shop", (q) => q.eq("shopId", user.shopId!))
+      .collect();
+
+    // Generate CSV with customer and transaction data
+    const headers = "Türü,Müşteri ID,Müşteri Adı,Telefon,İşlem ID,İşlem Tipi,Metal Tipi,Tutar,Not,Vade Tarihi,Oluşturma Tarihi\n";
+
+    const rows = customers.map(customer => {
+      const customerTransactions = transactions.filter(t => t.customerId === customer._id);
+
+      if (customerTransactions.length === 0) {
+        // Customer with no transactions
+        return `Müşteri,${customer._id},"${customer.name}","${customer.phone}",,,,,,,"${new Date(customer.createdAt).toLocaleString("tr-TR")}"`;
+      }
+
+      // Customer with transactions
+      return customerTransactions.map(tx => {
+        const date = new Date(tx.createdAt).toLocaleString("tr-TR");
+        const dueDate = tx.dueDate ? new Date(tx.dueDate).toLocaleString("tr-TR") : "";
+        const note = (tx.note || "").replace(/,/g, ";");
+        return `İşlem,${customer._id},"${customer.name}","${customer.phone}",${tx._id},${tx.type},${tx.metalType},${tx.amount},"${note}","${dueDate}","${date}"`;
+      }).join("\n");
+    }).join("\n");
+
+    return headers + rows;
   },
 });
 
@@ -133,19 +212,25 @@ export const updateCustomer = mutation({
 export const deleteCustomer = mutation({
   args: {
     customerId: v.id("customers"),
+    clerkId: v.string(),
   },
   handler: async (ctx, args) => {
-    const activeUser = await getActiveUser(ctx);
-    if (!activeUser) {
+    // Use clerkId to find user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) {
       throw new Error("Giriş yapılmadı.");
     }
 
-    if (activeUser.role === "staff") {
+    if (user.role === "staff") {
       throw new Error("Müşteri silme yetkiniz yoktur (Sadece yönetici ve dükkan sahipleri silebilir).");
     }
 
     const customer = await ctx.db.get(args.customerId);
-    if (!customer || customer.shopId !== activeUser.shopId) {
+    if (!customer || customer.shopId !== user.shopId) {
       throw new Error("Müşteri bulunamadı veya yetkisiz erişim.");
     }
 
@@ -154,10 +239,25 @@ export const deleteCustomer = mutation({
       .query("transactions")
       .withIndex("by_customer", (q) => q.eq("customerId", args.customerId))
       .collect();
-    
+
     for (const transaction of transactions) {
       await ctx.db.delete(transaction._id);
     }
+
+    // Log kaydı oluştur
+    await ctx.db.insert("logs", {
+      shopId: user.shopId!,
+      userId: user._id,
+      action: "customer_deleted",
+      entityType: "customer",
+      entityId: args.customerId as any,
+      details: JSON.stringify({
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        deletedTransactionsCount: transactions.length,
+      }),
+      createdAt: Date.now(),
+    });
 
     await ctx.db.delete(args.customerId);
   },

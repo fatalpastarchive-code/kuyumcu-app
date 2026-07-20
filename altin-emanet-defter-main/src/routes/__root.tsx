@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { UnitsProvider } from "../components/providers/UnitsProvider";
 import { ConvexAuthProvider } from "@/lib/convex";
+import { SettingsProvider } from "../components/providers/SettingsProvider";
 
 function NotFoundComponent() {
   return (
@@ -129,8 +130,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ConvexAuthProvider>
         <UnitsProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
+          <SettingsProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </SettingsProvider>
         </UnitsProvider>
       </ConvexAuthProvider>
     </QueryClientProvider>

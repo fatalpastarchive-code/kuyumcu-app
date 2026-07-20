@@ -46,6 +46,24 @@ export const createTransaction = mutation({
       createdAt: Date.now(),
     });
 
+    // Log kaydı oluştur
+    await ctx.db.insert("logs", {
+      shopId: user.shopId,
+      userId: user._id,
+      action: "transaction_created",
+      entityType: "transaction",
+      entityId: transactionId as any,
+      details: JSON.stringify({
+        customerId: args.customerId,
+        type: args.type,
+        metalType: args.metalType,
+        amount: args.amount,
+        note: args.note,
+        dueDate: args.dueDate,
+      }),
+      createdAt: Date.now(),
+    });
+
     return transactionId;
   },
 });
@@ -98,6 +116,50 @@ export const getShopTransactions = query({
       .order("desc")
       .collect();
     return transactions;
+  },
+});
+
+// İşlem silme
+export const deleteTransaction = mutation({
+  args: {
+    transactionId: v.id("transactions"),
+    clerkId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Use clerkId to find user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) {
+      throw new Error("Giriş yapılmadı.");
+    }
+
+    const transaction = await ctx.db.get(args.transactionId);
+    if (!transaction || transaction.shopId !== user.shopId) {
+      throw new Error("İşlem bulunamadı veya yetkisiz erişim.");
+    }
+
+    // Log kaydı oluştur
+    await ctx.db.insert("logs", {
+      shopId: user.shopId!,
+      userId: user._id,
+      action: "transaction_deleted",
+      entityType: "transaction",
+      entityId: args.transactionId as any,
+      details: JSON.stringify({
+        customerId: transaction.customerId,
+        type: transaction.type,
+        metalType: transaction.metalType,
+        amount: transaction.amount,
+        note: transaction.note,
+      }),
+      createdAt: Date.now(),
+    });
+
+    // İşlemi sil
+    await ctx.db.delete(args.transactionId);
   },
 });
 
@@ -239,30 +301,6 @@ export const updateTransaction = mutation({
 
     const { transactionId, ...updates } = args;
     await ctx.db.patch(transactionId, updates);
-  },
-});
-
-// İşlem silme (sadece owner ve manager)
-export const deleteTransaction = mutation({
-  args: {
-    transactionId: v.id("transactions"),
-  },
-  handler: async (ctx, args) => {
-    const activeUser = await getActiveUser(ctx);
-    if (!activeUser) {
-      throw new Error("Giriş yapılmadı.");
-    }
-
-    if (activeUser.role === "staff") {
-      throw new Error("İşlem silme yetkiniz yoktur (Sadece yönetici ve dükkan sahipleri silebilir).");
-    }
-
-    const transaction = await ctx.db.get(args.transactionId);
-    if (!transaction || transaction.shopId !== activeUser.shopId) {
-      throw new Error("İşlem bulunamadı veya yetkisiz erişim.");
-    }
-
-    await ctx.db.delete(args.transactionId);
   },
 });
 

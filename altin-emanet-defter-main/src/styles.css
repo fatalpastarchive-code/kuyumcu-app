@@ -156,3 +156,60 @@
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
 }
+
+/* Light Theme - High Contrast for Bright Environments */
+.light {
+  --background: oklch(0.98 0.005 90);
+  --foreground: oklch(0.15 0.012 260);
+  
+  --surface: oklch(0.94 0.008 90);
+  --surface-elevated: oklch(0.90 0.01 90);
+  
+  --card: oklch(0.94 0.008 90);
+  --card-foreground: oklch(0.15 0.012 260);
+  --popover: oklch(0.94 0.008 90);
+  --popover-foreground: oklch(0.15 0.012 260);
+  
+  --primary: oklch(0.65 0.18 75); /* Darker gold for light theme */
+  --primary-foreground: oklch(0.98 0.005 90);
+  --secondary: oklch(0.85 0.01 90);
+  --secondary-foreground: oklch(0.15 0.012 260);
+  --muted: oklch(0.85 0.01 90);
+  --muted-foreground: oklch(0.45 0.012 260);
+  --accent: oklch(0.55 0.18 160);
+  --accent-foreground: oklch(0.98 0.005 90);
+  --destructive: oklch(0.55 0.22 27);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.15 0.012 260 / 15%);
+  --input: oklch(0.15 0.012 260 / 20%);
+  --ring: oklch(0.65 0.18 75);
+  
+  --gold: oklch(0.65 0.18 75);
+  --gold-soft: oklch(0.75 0.14 78);
+  --emerald-brand: oklch(0.55 0.18 160);
+}
+
+/* Large Text Mode - For Accessibility */
+.large-text {
+  font-size: 120%;
+}
+
+.large-text .text-sm {
+  font-size: 1rem !important;
+}
+
+.large-text .text-xs {
+  font-size: 0.875rem !important;
+}
+
+.large-text input,
+.large-text button {
+  font-size: 1rem !important;
+}
+
+/* Safe area for mobile devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
