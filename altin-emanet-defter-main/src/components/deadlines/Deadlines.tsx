@@ -11,13 +11,15 @@ export function Deadlines() {
   const transactions = useQuery(api.transactions.getShopTransactions, { clerkId: userId });
 
   // Dismissed notification IDs (persisted per session in localStorage)
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+
+  // Load dismissed IDs from localStorage after mount (avoids SSR hydration mismatch)
+  React.useEffect(() => {
     try {
       const saved = localStorage.getItem("dismissedDeadlines");
-      if (saved) return new Set(JSON.parse(saved));
+      if (saved) setDismissedIds(new Set(JSON.parse(saved)));
     } catch {}
-    return new Set();
-  });
+  }, []);
 
   const dismissItem = useCallback((id: string) => {
     setDismissedIds((prev) => {
