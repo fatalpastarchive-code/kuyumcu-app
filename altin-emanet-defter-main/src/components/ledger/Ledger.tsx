@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useQuery } from "convex/react";
 // @ts-ignore
 import { api } from "@convex/_generated/api.js";
-import { useAuth } from "@clerk/clerk-react";
 import { Search, Users, ChevronRight, Phone, MessageSquare, ArrowUpRight, ArrowDownLeft, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,9 +15,9 @@ const METAL_TYPES = [
 ];
 
 export function Ledger() {
-  const { userId } = useAuth();
-  const customers = useQuery(api.customers.getShopCustomers, userId ? { clerkId: userId } : "skip");
-  const transactions = useQuery(api.transactions.getShopTransactions, userId ? { clerkId: userId } : "skip");
+  const userId = "demo-user";
+  const customers = useQuery(api.customers.getShopCustomers, { clerkId: userId });
+  const transactions = useQuery(api.transactions.getShopTransactions, { clerkId: userId });
   
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);

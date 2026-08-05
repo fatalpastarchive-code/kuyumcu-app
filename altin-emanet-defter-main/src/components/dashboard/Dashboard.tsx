@@ -7,9 +7,12 @@ import {
   TrendingUp, AlertCircle, ArrowUpRight, ArrowDownLeft,
   ChevronRight, Users, Settings, Trash2, X
 } from "lucide-react";
-import { useAuth } from "@clerk/clerk-react";
 import { toast } from "sonner";
 import { BottomNavigation } from "../navigation/BottomNavigation";
+import { NotificationsBell } from "../app/NotificationsBell";
+import { useNotificationChecker } from "../../hooks/useNotificationChecker";
+import { useNotifications } from "../../providers/NotificationProvider";
+import { DailySummaryPopup } from "./DailySummaryPopup";
 
 // Altın ayarları ve birim etiketleri
 const METAL_TYPES = [
@@ -22,10 +25,14 @@ const METAL_TYPES = [
 ];
 
 export function Dashboard() {
-  const { userId } = useAuth();
-  const user = useQuery(api.users.getMe);
-  const customers = useQuery(api.customers.getShopCustomers, userId ? { clerkId: userId } : "skip");
-  const transactions = useQuery(api.transactions.getShopTransactions, userId ? { clerkId: userId } : "skip");
+  // Enable notification checking for due dates
+  useNotificationChecker();
+  const { sendNotification, settings: notificationSettings, permission } = useNotifications();
+
+  // Using a placeholder userId since auth is disabled
+  const userId = "demo-user";
+  const customers = useQuery(api.customers.getShopCustomers, { clerkId: userId });
+  const transactions = useQuery(api.transactions.getShopTransactions, { clerkId: userId });
   
   const createCustomer = useMutation(api.customers.createCustomer);
   const createTransaction = useMutation(api.transactions.createTransaction);
@@ -53,6 +60,7 @@ export function Dashboard() {
   const [txAmount, setTxAmount] = useState("");
   const [txNote, setTxNote] = useState("");
   const [txDueDate, setTxDueDate] = useState("");
+  const [txDueTime, setTxDueTime] = useState("");
 
   // Seçilen müşteri bilgileri
   const selectedCustomer = customers?.find((c: any) => c._id === selectedCustomerId);
@@ -137,7 +145,7 @@ export function Dashboard() {
       await createCustomer({
         name: newCustomerName.trim(),
         phone: newCustomerPhone.trim(),
-        clerkId: userId!,
+        clerkId: userId,
       });
       toast.success("Müşteri başarıyla eklendi.");
       setNewCustomerName("");
@@ -161,7 +169,7 @@ export function Dashboard() {
         name: editCustomerName.trim(),
         phone: editCustomerPhone.trim(),
         profileImage: editCustomerImage.trim() || undefined,
-        clerkId: userId!,
+        clerkId: userId,
       });
       toast.success("Müşteri bilgileri güncellendi.");
       setShowEditCustomer(false);
@@ -192,7 +200,7 @@ export function Dashboard() {
     try {
       await deleteCustomer({
         customerId: selectedCustomerId as any,
-        clerkId: userId!,
+        clerkId: userId,
       });
       toast.success("Müşteri başarıyla silindi.");
       setSelectedCustomerId(null);
@@ -209,7 +217,7 @@ export function Dashboard() {
     try {
       await deleteTransaction({
         transactionId: transactionId as any,
-        clerkId: userId!,
+        clerkId: userId,
       });
       toast.success("İşlem başarıyla silindi.");
     } catch (err: any) {
@@ -225,19 +233,57 @@ export function Dashboard() {
     }
 
     try {
+      // Combine date and time for due date
+      let dueDateTimestamp: number | undefined;
+      if (txDueDate) {
+        const dateTimeString = txDueTime ? `${txDueDate}T${txDueTime}` : txDueDate;
+        dueDateTimestamp = new Date(dateTimeString).getTime();
+      }
+
       await createTransaction({
         customerId: selectedCustomerId as any,
         type: txType,
         metalType: txMetalType,
         amount: parseFloat(txAmount),
         note: txNote.trim() || undefined,
-        dueDate: txDueDate ? new Date(txDueDate).getTime() : undefined,
-        clerkId: userId!,
+        dueDate: dueDateTimestamp,
+        clerkId: userId,
       });
       toast.success(txType === "debt" ? "Borç başarıyla eklendi." : "Ödeme başarıyla kaydedildi.");
+
+      // Schedule notification if due date is set and notifications are enabled
+      if (dueDateTimestamp && notificationSettings.enabled && permission === "granted" && txType === "debt") {
+        const customer = customers?.find((c: any) => c._id === selectedCustomerId);
+        const customerName = customer?.name || "Müşteri";
+        const dueDate = new Date(dueDateTimestamp);
+        const formattedDate = dueDate.toLocaleDateString("tr-TR", { 
+          day: "numeric", 
+          month: "long", 
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+
+        // Calculate delay until notification time
+        const now = Date.now();
+        const advanceNoticeMs = notificationSettings.advanceNotice * 24 * 60 * 60 * 1000;
+        const notificationTime = dueDateTimestamp - advanceNoticeMs;
+        const delay = notificationTime - now;
+
+        if (delay > 0) {
+          setTimeout(() => {
+            sendNotification(
+              `Vade Bildirimi - ${customerName}`,
+              `${parseFloat(txAmount)} ${txMetalType} borcunun vadesi ${formattedDate} tarihinde doluyor.`
+            );
+          }, delay);
+        }
+      }
+
       setTxAmount("");
       setTxNote("");
       setTxDueDate("");
+      setTxDueTime("");
       setShowAddTransaction(false);
     } catch (err: any) {
       toast.error("Hata: " + err.message);
@@ -268,16 +314,22 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white font-sans selection:bg-amber-500 selection:text-black pb-24">
+      {/* Daily Summary Popup - shows once per day */}
+      <DailySummaryPopup clerkId={userId} />
+
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-900/60 py-4 px-6">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
-            <span className="font-extrabold text-zinc-950 text-sm">AD</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
+              <span className="font-extrabold text-zinc-950 text-sm">AD</span>
+            </div>
+            <div>
+              <span className="font-bold text-lg tracking-tight block">Altın Defter</span>
+              <span className="text-[10px] text-amber-500 font-semibold tracking-widest uppercase block -mt-1">Emanet Paneli</span>
+            </div>
           </div>
-          <div>
-            <span className="font-bold text-lg tracking-tight block">Altın Defter</span>
-            <span className="text-[10px] text-amber-500 font-semibold tracking-widest uppercase block -mt-1">Emanet Paneli</span>
-          </div>
+          <NotificationsBell userId={userId} />
         </div>
       </header>
 
@@ -471,7 +523,7 @@ export function Dashboard() {
 
             {/* Transaction Form / List Toggle */}
             {showAddTransaction ? (
-              <form onSubmit={handleAddTransactionSubmit} className="space-y-3 overflow-y-auto pr-1 flex-1 pb-20">
+              <form onSubmit={handleAddTransactionSubmit} className="space-y-3 overflow-y-auto pr-1 flex-1 pb-28">
                 <div className="flex items-center justify-between">
                   <span className="text-zinc-400 font-bold text-xs">İşlem Ekle</span>
                   <button
@@ -548,13 +600,21 @@ export function Dashboard() {
                 {/* Due Date (Optional for Debt) */}
                 {txType === "debt" && (
                   <div>
-                    <label className="block text-[9px] font-bold text-zinc-500 uppercase mb-1">Vade Tarihi (Opsiyonel)</label>
-                    <input
-                      type="date"
-                      value={txDueDate}
-                      onChange={(e) => setTxDueDate(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500/40"
-                    />
+                    <label className="block text-[9px] font-bold text-zinc-500 uppercase mb-1">Vade Tarihi ve Saat (Opsiyonel)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={txDueDate}
+                        onChange={(e) => setTxDueDate(e.target.value)}
+                        className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500/40"
+                      />
+                      <input
+                        type="time"
+                        value={txDueTime}
+                        onChange={(e) => setTxDueTime(e.target.value)}
+                        className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-amber-500/40"
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -578,7 +638,7 @@ export function Dashboard() {
                 </div>
 
                 {/* Transaction history list */}
-                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 min-h-0 pb-20">
+                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 min-h-0 pb-28">
                   {selectedCustomerTx && selectedCustomerTx.length === 0 ? (
                     <div className="py-8 text-center text-zinc-600">
                       <p className="text-[10px]">İşlem kaydı yok</p>
@@ -643,7 +703,7 @@ export function Dashboard() {
           <div className="relative w-full max-w-lg bg-zinc-900 border-t border-zinc-800 rounded-t-[32px] shadow-2xl p-4 z-10 animate-slide-up">
             <div className="w-12 h-1 bg-zinc-700 rounded-full mx-auto mb-4" />
             <h2 className="text-lg font-bold text-white mb-4">Yeni Müşteri Ekle</h2>
-            <form onSubmit={handleAddCustomer} className="space-y-3 pb-20">
+            <form onSubmit={handleAddCustomer} className="space-y-3 pb-28">
               <div>
                 <label className="block text-[9px] font-bold text-zinc-500 uppercase mb-1">Müşteri Adı</label>
                 <input
@@ -693,7 +753,7 @@ export function Dashboard() {
           <div className="relative w-full max-w-lg bg-zinc-900 border-t border-zinc-800 rounded-t-[32px] shadow-2xl p-4 z-10 animate-slide-up">
             <div className="w-12 h-1 bg-zinc-700 rounded-full mx-auto mb-4" />
             <h2 className="text-lg font-bold text-white mb-4">Müşteri Düzenle</h2>
-            <form onSubmit={handleEditCustomer} className="space-y-3 pb-20">
+            <form onSubmit={handleEditCustomer} className="space-y-3 pb-28">
               <div>
                 <label className="block text-[9px] font-bold text-zinc-500 uppercase mb-1">Müşteri Adı</label>
                 <input
@@ -802,7 +862,7 @@ export function Dashboard() {
             </div>
 
             {/* Details */}
-            <div className="space-y-3 flex-1 overflow-y-auto pb-20">
+            <div className="space-y-3 flex-1 overflow-y-auto pb-28">
               {selectedTransaction.note && (
                 <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-3">
                   <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">Not</span>

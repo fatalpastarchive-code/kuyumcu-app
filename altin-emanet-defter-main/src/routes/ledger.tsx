@@ -4,15 +4,14 @@ import { BottomNavigation } from "../components/navigation/BottomNavigation";
 import { useQuery } from "convex/react";
 // @ts-ignore
 import { api } from "@convex/_generated/api.js";
-import { useAuth } from "@clerk/clerk-react";
 
 export const Route = createFileRoute("/ledger")({
   component: LedgerRoute,
 });
 
 function LedgerRoute() {
-  const { userId } = useAuth();
-  const transactions = useQuery(api.transactions.getShopTransactions, userId ? { clerkId: userId } : "skip");
+  const userId = "demo-user";
+  const transactions = useQuery(api.transactions.getShopTransactions, { clerkId: userId });
   
   const getOverdueCount = () => {
     const todayStart = new Date().setHours(0, 0, 0, 0);

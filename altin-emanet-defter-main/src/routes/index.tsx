@@ -1,7 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Landing } from "@/components/landing/Landing";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
-  component: Landing,
+  component: IndexRedirect,
 });
+
+function IndexRedirect() {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    navigate({ to: "/dashboard" });
+  }, [navigate]);
+
+  return null;
+}

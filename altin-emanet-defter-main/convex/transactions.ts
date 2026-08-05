@@ -15,14 +15,59 @@ export const createTransaction = mutation({
     clerkId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Use clerkId to find user instead of getActiveUser
-    const user = await ctx.db
+    // Use clerkId to find user, create default user/shop if not exists
+    let user = await ctx.db
       .query("users")
       .withIndex("by_clerk", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
-    if (!user || !user.shopId || !user._id) {
-      throw new Error("Giriş yapılmadı veya kullanıcı bilgisi bulunamadı");
+    // Create default user and shop if not exists
+    if (!user) {
+      const userId = await ctx.db.insert("users", {
+        clerkId: args.clerkId,
+        email: "demo@example.com",
+        name: "Demo Kullanıcı",
+        role: "owner",
+        status: "active",
+        createdAt: Date.now(),
+      });
+
+      const shopId = await ctx.db.insert("shops", {
+        name: "Demo Dükkan",
+        ownerId: userId,
+        smsTemplate: "Sayın [Müşteri Adı], Altın Defter sistemindeki vadeli [Borç Miktarı] borcunuzun ödeme günü gelmiştir. Hayırlı işler dileriz.",
+        createdAt: Date.now(),
+      });
+
+      await ctx.db.patch(userId, { shopId });
+      user = await ctx.db.get(userId);
+    }
+
+    // Create shop if user doesn't have one
+    // @ts-ignore
+    if (!user) {
+      throw new Error("Kullanıcı bilgisi bulunamadı");
+    }
+
+    // Use non-null assertion after explicit check
+    const safeUser = user;
+    if (!safeUser.shopId) {
+      const shopId = await ctx.db.insert("shops", {
+        name: "Demo Dükkan",
+        ownerId: safeUser._id,
+        smsTemplate: "Sayın [Müşteri Adı], Altın Defter sistemindeki vadeli [Borç Miktarı] borcunuzun ödeme günü gelmiştir. Hayırlı işler dileriz.",
+        createdAt: Date.now(),
+      });
+
+      await ctx.db.patch(safeUser._id, { shopId });
+      const updatedUser = await ctx.db.get(safeUser._id);
+      if (updatedUser) {
+        user = updatedUser;
+      }
+    }
+
+    if (!user || !user.shopId) {
+      throw new Error("Kullanıcı veya dükkan bilgisi oluşturulamadı");
     }
 
     // Müşterinin bu dükkana ait olduğundan emin ol
@@ -165,27 +210,30 @@ export const deleteTransaction = mutation({
 
 // Vadesi bugün gelen veya vadesi geçmiş tamamlanmamış işlemleri getirme (Anlık Bildirimler İçin)
 export const getActiveDueTransactions = query({
-  args: {},
-  handler: async (ctx) => {
-    const activeUser = await getActiveUser(ctx);
-    if (!activeUser || !activeUser.shopId) return [];
+  args: {
+    clerkId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const clerkId = args.clerkId || "demo-user";
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", clerkId))
+      .first();
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    const todayEnd = today.getTime();
+    if (!user || !user.shopId) return [];
 
-    // Dükkana ait tüm işlemleri alıp filtreleyelim (Convex index sınırları nedeniyle)
+    const today = Date.now();
+
     const transactions = await ctx.db
       .query("transactions")
-      .withIndex("by_shop", (q) => q.eq("shopId", activeUser.shopId!))
+      .withIndex("by_shop", (q) => q.eq("shopId", user.shopId!))
       .collect();
 
-    // Vadesi dolmuş/bugün olan, borç tipinde olan ve henüz tamamlanmamış olanları getir
     const filtered = transactions.filter(
       (t) =>
         t.type === "debt" &&
         t.dueDate !== undefined &&
-        t.dueDate <= todayEnd &&
+        t.dueDate <= today &&
         t.isCompleted !== true
     );
 
@@ -206,17 +254,23 @@ export const getActiveDueTransactions = query({
 export const getUpcomingDueTransactions = query({
   args: {
     daysAhead: v.number(),
+    clerkId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const activeUser = await getActiveUser(ctx);
-    if (!activeUser || !activeUser.shopId) return [];
+    const clerkId = args.clerkId || "demo-user";
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", clerkId))
+      .first();
+
+    if (!user || !user.shopId) return [];
 
     const now = Date.now();
     const futureDate = now + args.daysAhead * 24 * 60 * 60 * 1000;
 
     const transactions = await ctx.db
       .query("transactions")
-      .withIndex("by_shop", (q) => q.eq("shopId", activeUser.shopId!))
+      .withIndex("by_shop", (q) => q.eq("shopId", user.shopId!))
       .collect();
 
     const filtered = transactions.filter(

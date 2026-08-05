@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { LogOut, Users, BookOpen } from "lucide-react";
-import { Logo } from "@/components/landing/Logo";
 import { NotificationsBell } from "@/components/app/NotificationsBell";
 
 export const Route = createFileRoute("/_authenticated/app")({
@@ -22,7 +21,7 @@ function AppLayout() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-6">
-            <Link to="/app"><Logo /></Link>
+            <Link to="/app" className="font-bold text-amber-500 text-lg">Altın Defter</Link>
             <nav className="hidden gap-4 md:flex">
               <Link
                 to="/app"

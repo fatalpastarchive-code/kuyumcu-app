@@ -10,13 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuperAdminRouteImport } from './routes/super-admin'
-import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as LogsRouteImport } from './routes/logs'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as DeadlinesRouteImport } from './routes/deadlines'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
@@ -26,11 +24,6 @@ import { Route as AuthenticatedAppCustomersCustomerIdRouteImport } from './route
 const SuperAdminRoute = SuperAdminRouteImport.update({
   id: '/super-admin',
   path: '/super-admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignUpRoute = SignUpRouteImport.update({
-  id: '/sign-up',
-  path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -56,11 +49,6 @@ const DeadlinesRoute = DeadlinesRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -91,13 +79,11 @@ const AuthenticatedAppCustomersCustomerIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/deadlines': typeof DeadlinesRoute
   '/ledger': typeof LedgerRoute
   '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
-  '/sign-up': typeof SignUpRoute
   '/super-admin': typeof SuperAdminRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -105,13 +91,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/deadlines': typeof DeadlinesRoute
   '/ledger': typeof LedgerRoute
   '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
-  '/sign-up': typeof SignUpRoute
   '/super-admin': typeof SuperAdminRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/customers/$customerId': typeof AuthenticatedAppCustomersCustomerIdRoute
@@ -120,13 +104,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/deadlines': typeof DeadlinesRoute
   '/ledger': typeof LedgerRoute
   '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
-  '/sign-up': typeof SignUpRoute
   '/super-admin': typeof SuperAdminRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -136,13 +118,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/auth'
     | '/dashboard'
     | '/deadlines'
     | '/ledger'
     | '/logs'
     | '/settings'
-    | '/sign-up'
     | '/super-admin'
     | '/app'
     | '/app/'
@@ -150,13 +130,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth'
     | '/dashboard'
     | '/deadlines'
     | '/ledger'
     | '/logs'
     | '/settings'
-    | '/sign-up'
     | '/super-admin'
     | '/app'
     | '/app/customers/$customerId'
@@ -164,13 +142,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/auth'
     | '/dashboard'
     | '/deadlines'
     | '/ledger'
     | '/logs'
     | '/settings'
-    | '/sign-up'
     | '/super-admin'
     | '/_authenticated/app'
     | '/_authenticated/app/'
@@ -180,13 +156,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   DeadlinesRoute: typeof DeadlinesRoute
   LedgerRoute: typeof LedgerRoute
   LogsRoute: typeof LogsRoute
   SettingsRoute: typeof SettingsRoute
-  SignUpRoute: typeof SignUpRoute
   SuperAdminRoute: typeof SuperAdminRoute
 }
 
@@ -197,13 +171,6 @@ declare module '@tanstack/react-router' {
       path: '/super-admin'
       fullPath: '/super-admin'
       preLoaderRoute: typeof SuperAdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-up': {
-      id: '/sign-up'
-      path: '/sign-up'
-      fullPath: '/sign-up'
-      preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -239,13 +206,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -314,13 +274,11 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   DeadlinesRoute: DeadlinesRoute,
   LedgerRoute: LedgerRoute,
   LogsRoute: LogsRoute,
   SettingsRoute: SettingsRoute,
-  SignUpRoute: SignUpRoute,
   SuperAdminRoute: SuperAdminRoute,
 }
 export const routeTree = rootRouteImport

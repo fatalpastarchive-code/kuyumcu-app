@@ -10,14 +10,59 @@ export const createCustomer = mutation({
     clerkId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Use clerkId to find user instead of auth.getUserIdentity
-    const user = await ctx.db
+    // Use clerkId to find user, create default user/shop if not exists
+    let user = await ctx.db
       .query("users")
       .withIndex("by_clerk", (q) => q.eq("clerkId", args.clerkId))
       .first();
 
+    // Create default user and shop if not exists
+    if (!user) {
+      const userId = await ctx.db.insert("users", {
+        clerkId: args.clerkId,
+        email: "demo@example.com",
+        name: "Demo Kullanıcı",
+        role: "owner",
+        status: "active",
+        createdAt: Date.now(),
+      });
+
+      const shopId = await ctx.db.insert("shops", {
+        name: "Demo Dükkan",
+        ownerId: userId,
+        smsTemplate: "Sayın [Müşteri Adı], Altın Defter sistemindeki vadeli [Borç Miktarı] borcunuzun ödeme günü gelmiştir. Hayırlı işler dileriz.",
+        createdAt: Date.now(),
+      });
+
+      await ctx.db.patch(userId, { shopId });
+      user = await ctx.db.get(userId);
+    }
+
+    // Create shop if user doesn't have one
+    // @ts-ignore
+    if (!user) {
+      throw new Error("Kullanıcı bilgisi bulunamadı");
+    }
+
+    // Use non-null assertion after explicit check
+    const safeUser = user;
+    if (!safeUser.shopId) {
+      const shopId = await ctx.db.insert("shops", {
+        name: "Demo Dükkan",
+        ownerId: safeUser._id,
+        smsTemplate: "Sayın [Müşteri Adı], Altın Defter sistemindeki vadeli [Borç Miktarı] borcunuzun ödeme günü gelmiştir. Hayırlı işler dileriz.",
+        createdAt: Date.now(),
+      });
+
+      await ctx.db.patch(safeUser._id, { shopId });
+      const updatedUser = await ctx.db.get(safeUser._id);
+      if (updatedUser) {
+        user = updatedUser;
+      }
+    }
+
     if (!user || !user.shopId) {
-      throw new Error("Giriş yapılmadı veya dükkan bilgisi bulunamadı");
+      throw new Error("Kullanıcı veya dükkan bilgisi oluşturulamadı");
     }
 
     const customerId = await ctx.db.insert("customers", {

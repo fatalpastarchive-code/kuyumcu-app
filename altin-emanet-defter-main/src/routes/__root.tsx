@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { UnitsProvider } from "../components/providers/UnitsProvider";
 import { ConvexAuthProvider } from "@/lib/convex";
 import { SettingsProvider } from "../components/providers/SettingsProvider";
+import { NotificationProvider } from "../providers/NotificationProvider";
 
 function NotFoundComponent() {
   return (
@@ -126,13 +127,24 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    // Register service worker for notifications
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch((error) => {
+        console.error("Service Worker registration failed:", error);
+      });
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ConvexAuthProvider>
         <UnitsProvider>
           <SettingsProvider>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
+            <NotificationProvider>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </NotificationProvider>
           </SettingsProvider>
         </UnitsProvider>
       </ConvexAuthProvider>

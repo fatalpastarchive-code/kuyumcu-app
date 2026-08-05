@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ConvexReactClient } from "convex/react";
-import { ClerkProvider, useAuth } from "@clerk/clerk-react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { ConvexProvider } from "convex/react";
 
-const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "";
 const convexUrl = import.meta.env.VITE_CONVEX_URL || "";
 
 // Client-side instance
@@ -25,10 +23,8 @@ export function ConvexAuthProvider({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
-      <ConvexProviderWithClerk client={convexClient} useAuth={useAuth}>
-        {children}
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+    <ConvexProvider client={convexClient}>
+      {children}
+    </ConvexProvider>
   );
 }

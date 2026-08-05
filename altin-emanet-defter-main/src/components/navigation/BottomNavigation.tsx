@@ -25,7 +25,6 @@ export function BottomNavigation({ onQuickAddClick, overdueCount = 0 }: BottomNa
     { path: "/dashboard", icon: Home, label: "Panel" },
     { path: "/ledger", icon: BookOpen, label: "Defter" },
     { path: "/deadlines", icon: Bell, label: "Vadeler", badge: overdueCount },
-    { path: "/logs", icon: SettingsIcon, label: "Loglar" },
     { path: "/settings", icon: SettingsIcon, label: "Ayarlar" },
   ];
 

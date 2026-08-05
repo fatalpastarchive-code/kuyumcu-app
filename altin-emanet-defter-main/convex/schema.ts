@@ -112,4 +112,14 @@ export default defineSchema({
   }).index("by_shop", ["shopId"])
    .index("by_user", ["userId"])
    .index("by_date", ["createdAt"]),
+
+  // Push Bildirim Abonelikleri tablosu
+  pushSubscriptions: defineTable({
+    shopId: v.id("shops"),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    createdAt: v.number(),
+  }).index("by_shop", ["shopId"])
+    .index("by_endpoint", ["endpoint"]),
 });

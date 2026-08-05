@@ -14,6 +14,7 @@ import type * as customers from "../customers.js";
 import type * as logs from "../logs.js";
 import type * as notificationSettings from "../notificationSettings.js";
 import type * as payments from "../payments.js";
+import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as settings from "../settings.js";
 import type * as shops from "../shops.js";
 import type * as transactions from "../transactions.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   logs: typeof logs;
   notificationSettings: typeof notificationSettings;
   payments: typeof payments;
+  pushSubscriptions: typeof pushSubscriptions;
   settings: typeof settings;
   shops: typeof shops;
   transactions: typeof transactions;
