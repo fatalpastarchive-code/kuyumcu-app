@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Download,
   FileSpreadsheet,
-  FileText,
   Bell,
   Clock,
   Users
@@ -269,30 +268,6 @@ export function Settings() {
                 )}
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Logs */}
-        <div className="bg-zinc-900/60 backdrop-blur border border-zinc-900 rounded-2xl overflow-hidden">
-          <div className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-amber-400" />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-zinc-100">İşlem Logları</h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
-                  Tüm işlemleri görüntüle
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate({ to: "/logs" })}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl transition-colors text-xs"
-            >
-              <ChevronRight className="w-4 h-4" />
-              Git
-            </button>
           </div>
         </div>
 

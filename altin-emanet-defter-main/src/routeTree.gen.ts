@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuperAdminRouteImport } from './routes/super-admin'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as LogsRouteImport } from './routes/logs'
 import { Route as LedgerRouteImport } from './routes/ledger'
 import { Route as DeadlinesRouteImport } from './routes/deadlines'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -29,11 +28,6 @@ const SuperAdminRoute = SuperAdminRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LogsRoute = LogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LedgerRoute = LedgerRouteImport.update({
@@ -82,7 +76,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/deadlines': typeof DeadlinesRoute
   '/ledger': typeof LedgerRoute
-  '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
   '/super-admin': typeof SuperAdminRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
@@ -94,7 +87,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/deadlines': typeof DeadlinesRoute
   '/ledger': typeof LedgerRoute
-  '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
   '/super-admin': typeof SuperAdminRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -107,7 +99,6 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/deadlines': typeof DeadlinesRoute
   '/ledger': typeof LedgerRoute
-  '/logs': typeof LogsRoute
   '/settings': typeof SettingsRoute
   '/super-admin': typeof SuperAdminRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
@@ -121,7 +112,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deadlines'
     | '/ledger'
-    | '/logs'
     | '/settings'
     | '/super-admin'
     | '/app'
@@ -133,7 +123,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deadlines'
     | '/ledger'
-    | '/logs'
     | '/settings'
     | '/super-admin'
     | '/app'
@@ -145,7 +134,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/deadlines'
     | '/ledger'
-    | '/logs'
     | '/settings'
     | '/super-admin'
     | '/_authenticated/app'
@@ -159,7 +147,6 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DeadlinesRoute: typeof DeadlinesRoute
   LedgerRoute: typeof LedgerRoute
-  LogsRoute: typeof LogsRoute
   SettingsRoute: typeof SettingsRoute
   SuperAdminRoute: typeof SuperAdminRoute
 }
@@ -178,13 +165,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/logs': {
-      id: '/logs'
-      path: '/logs'
-      fullPath: '/logs'
-      preLoaderRoute: typeof LogsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ledger': {
@@ -277,7 +257,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DeadlinesRoute: DeadlinesRoute,
   LedgerRoute: LedgerRoute,
-  LogsRoute: LogsRoute,
   SettingsRoute: SettingsRoute,
   SuperAdminRoute: SuperAdminRoute,
 }
